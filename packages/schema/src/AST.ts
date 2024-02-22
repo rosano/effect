@@ -1050,8 +1050,6 @@ export class Union implements Annotated {
   }
 }
 
-const isMembers = <A>(as: ReadonlyArray<A>): as is readonly [A, A, ...Array<A>] => as.length > 1
-
 /**
  * @category guards
  * @since 1.0.0
@@ -1345,14 +1343,17 @@ export const setAnnotation = (ast: AST, sym: symbol, value: unknown): AST => mer
  * @since 1.0.0
  */
 export const appendRestElement = (
-  ast: Tuple,
+  ast: AST,
   restElement: AST
 ): Tuple => {
-  if (Option.isSome(ast.rest)) {
-    // example: `type A = [...string[], ...number[]]` is illegal
-    throw new Error("A rest element cannot follow another rest element. ts(1265)")
+  if (isTuple(ast)) {
+    if (Option.isSome(ast.rest)) {
+      // example: `type A = [...string[], ...number[]]` is illegal
+      throw new Error("A rest element cannot follow another rest element. ts(1265)")
+    }
+    return new Tuple(ast.elements, Option.some([restElement]), ast.isReadonly)
   }
-  return new Tuple(ast.elements, Option.some([restElement]), ast.isReadonly)
+  throw new Error(`appendRestElement: unsupported schema (${ast})`)
 }
 
 /**
@@ -1363,24 +1364,27 @@ export const appendRestElement = (
  * @since 1.0.0
  */
 export const appendElement = (
-  ast: Tuple,
+  ast: AST,
   newElement: Element
 ): Tuple => {
-  if (ast.elements.some((e) => e.isOptional) && !newElement.isOptional) {
-    throw new Error("A required element cannot follow an optional element. ts(1257)")
-  }
-  return pipe(
-    ast.rest,
-    Option.match({
-      onNone: () => new Tuple([...ast.elements, newElement], Option.none(), ast.isReadonly),
-      onSome: (rest) => {
-        if (newElement.isOptional) {
-          throw new Error("An optional element cannot follow a rest element. ts(1266)")
+  if (isTuple(ast)) {
+    if (ast.elements.some((e) => e.isOptional) && !newElement.isOptional) {
+      throw new Error("A required element cannot follow an optional element. ts(1257)")
+    }
+    return pipe(
+      ast.rest,
+      Option.match({
+        onNone: () => new Tuple([...ast.elements, newElement], Option.none(), ast.isReadonly),
+        onSome: (rest) => {
+          if (newElement.isOptional) {
+            throw new Error("An optional element cannot follow a rest element. ts(1266)")
+          }
+          return new Tuple(ast.elements, Option.some([...rest, newElement.type]), ast.isReadonly)
         }
-        return new Tuple(ast.elements, Option.some([...rest, newElement.type]), ast.isReadonly)
-      }
-    })
-  )
+      })
+    )
+  }
+  throw new Error(`appendElement: unsupported schema (${ast})`)
 }
 
 /**
@@ -1389,6 +1393,12 @@ export const appendElement = (
  * @since 1.0.0
  */
 export const keyof = (ast: AST): AST => Union.make(_keyof(ast))
+
+/** @internal */
+export const mapMembers = <A, B>(members: Members<A>, f: (a: A) => B): Members<B> => members.map(f) as any
+
+/** @internal */
+export const isMembers = <A>(as: ReadonlyArray<A>): as is Members<A> => as.length > 1
 
 /** @internal */
 export const getTemplateLiteralRegex = (ast: TemplateLiteral): RegExp => {

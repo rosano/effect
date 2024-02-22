@@ -18,7 +18,8 @@ export const variance = {
   _R: (_: never) => _
 }
 
-class Schema<A, I, R> implements S.Schema<A, I, R> {
+/** @internal */
+export class Schema<A, I = A, R = never> implements S.Schema<A, I, R> {
   readonly [TypeId] = variance
   constructor(readonly ast: AST.AST) {}
   pipe() {
