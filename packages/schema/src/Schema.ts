@@ -68,6 +68,11 @@ export interface Schema<in out A, in out I = A, out R = never> extends Schema.Va
 }
 
 /**
+ * @since 1.0.0
+ */
+export const asSchema = <A, I, R>(schema: Schema<A, I, R>): Schema<A, I, R> => schema
+
+/**
  * @category hashing
  * @since 1.0.0
  */
@@ -364,7 +369,7 @@ export const validatePromise = <A, I>(
 /**
  * @since 1.0.0
  */
-export type AnySchema<R = unknown> = Schema<any, any, R> | Schema<never, never, R>
+export type AnySchema<R = unknown> = Schema<any, any, R>
 
 /**
  * Tests if a value is a `Schema`.
@@ -380,7 +385,11 @@ export const isSchema = (u: unknown): u is AnySchema => Predicate.isObject(u) &&
  */
 export const make: <A, I, R>(ast: AST.AST) => Schema<A, I, R> = _schema.make
 
-interface uniqueSymbol<S extends symbol> extends Schema<S> {
+/**
+ * @category api interface
+ * @since 1.0.0
+ */
+export interface uniqueSymbol<S extends symbol> extends Schema<S> {
   readonly symbol: S
 }
 
@@ -396,7 +405,11 @@ class UniqueSymbol<S extends symbol> extends _schema.Schema<S> implements unique
  */
 export const uniqueSymbol = <S extends symbol>(symbol: S): uniqueSymbol<S> => new UniqueSymbol(symbol)
 
-interface enums<A extends { [x: string]: string | number }> extends Schema<A[keyof A]> {
+/**
+ * @category api interface
+ * @since 1.0.0
+ */
+export interface enums<A extends { [x: string]: string | number }> extends Schema<A[keyof A]> {
   readonly enums: A
 }
 
@@ -416,7 +429,7 @@ class Enums<A extends { [x: string]: string | number }> extends _schema.Schema<A
  * @category constructors
  * @since 1.0.0
  */
-export const enums = <A extends { [x: string]: string | number }>(enums: A): Schema<A[keyof A]> => new Enums(enums)
+export const enums = <A extends { [x: string]: string | number }>(enums: A): enums<A> => new Enums(enums)
 
 /**
  * @since 1.0.0
@@ -426,7 +439,11 @@ export type Join<T> = T extends [infer Head, ...infer Tail]
     : Join<Tail>}`
   : never
 
-interface templateLiteral<A> extends Schema<A> {}
+/**
+ * @category api interface
+ * @since 1.0.0
+ */
+export interface templateLiteral<A> extends Schema<A> {}
 
 /**
  * @category constructors
@@ -615,7 +632,11 @@ export const fromBrand = <C extends Brand.Brand<string | symbol>>(
  */
 export const InstanceOfTypeId = Symbol.for("@effect/schema/TypeId/InstanceOf")
 
-interface instanceOf<A> extends Schema<A> {}
+/**
+ * @category api interface
+ * @since 1.0.0
+ */
+export interface instanceOf<A> extends Schema<A> {}
 
 /**
  * @category constructors
@@ -636,15 +657,27 @@ export const instanceOf = <A extends abstract new(...args: any) => any>(
     }
   )
 
-interface $undefined extends Schema<undefined> {}
+/**
+ * @category api interface
+ * @since 1.0.0
+ */
+export interface $undefined extends Schema<undefined> {}
 
 const $undefined: $undefined = make(AST.undefinedKeyword)
 
-interface $void extends Schema<void> {}
+/**
+ * @category api interface
+ * @since 1.0.0
+ */
+export interface $void extends Schema<void> {}
 
 const $void: $void = make(AST.voidKeyword)
 
-interface $null extends Schema<null> {}
+/**
+ * @category api interface
+ * @since 1.0.0
+ */
+export interface $null extends Schema<null> {}
 
 const $null: $null = make(AST._null)
 
@@ -666,7 +699,11 @@ export {
   $void as void
 }
 
-interface $never extends Schema<never> {}
+/**
+ * @category api interface
+ * @since 1.0.0
+ */
+export interface $never extends Schema<never> {}
 
 /**
  * @category primitives
@@ -674,7 +711,11 @@ interface $never extends Schema<never> {}
  */
 export const never: $never = make(AST.neverKeyword)
 
-interface $unknown extends Schema<unknown> {}
+/**
+ * @category api interface
+ * @since 1.0.0
+ */
+export interface $unknown extends Schema<unknown> {}
 
 /**
  * @category primitives
@@ -682,7 +723,11 @@ interface $unknown extends Schema<unknown> {}
  */
 export const unknown: $unknown = make(AST.unknownKeyword)
 
-interface $any extends Schema<any> {}
+/**
+ * @category api interface
+ * @since 1.0.0
+ */
+export interface $any extends Schema<any> {}
 
 /**
  * @category primitives
@@ -690,7 +735,11 @@ interface $any extends Schema<any> {}
  */
 export const any: $any = make(AST.anyKeyword)
 
-interface $string extends Schema<string> {}
+/**
+ * @category api interface
+ * @since 1.0.0
+ */
+export interface $string extends Schema<string> {}
 
 /**
  * @category primitives
@@ -698,7 +747,11 @@ interface $string extends Schema<string> {}
  */
 export const string: $string = make(AST.stringKeyword)
 
-interface $number extends Schema<number> {}
+/**
+ * @category api interface
+ * @since 1.0.0
+ */
+export interface $number extends Schema<number> {}
 
 /**
  * @category primitives
@@ -706,7 +759,11 @@ interface $number extends Schema<number> {}
  */
 export const number: $number = make(AST.numberKeyword)
 
-interface $boolean extends Schema<boolean> {}
+/**
+ * @category api interface
+ * @since 1.0.0
+ */
+export interface $boolean extends Schema<boolean> {}
 
 /**
  * @category primitives
@@ -714,7 +771,11 @@ interface $boolean extends Schema<boolean> {}
  */
 export const boolean: $boolean = make(AST.booleanKeyword)
 
-interface bigintFromSelf extends Schema<bigint> {}
+/**
+ * @category api interface
+ * @since 1.0.0
+ */
+export interface bigintFromSelf extends Schema<bigint> {}
 
 /**
  * @category primitives
@@ -722,7 +783,11 @@ interface bigintFromSelf extends Schema<bigint> {}
  */
 export const bigintFromSelf: bigintFromSelf = make(AST.bigIntKeyword)
 
-interface symbolFromSelf extends Schema<symbol> {}
+/**
+ * @category api interface
+ * @since 1.0.0
+ */
+export interface symbolFromSelf extends Schema<symbol> {}
 
 /**
  * @category primitives
@@ -730,7 +795,11 @@ interface symbolFromSelf extends Schema<symbol> {}
  */
 export const symbolFromSelf: symbolFromSelf = make(AST.symbolKeyword)
 
-interface $object extends Schema<object> {}
+/**
+ * @category api interface
+ * @since 1.0.0
+ */
+export interface $object extends Schema<object> {}
 
 /**
  * @category primitives
@@ -738,10 +807,14 @@ interface $object extends Schema<object> {}
  */
 export const object: $object = make(AST.objectKeyword)
 
-interface union<Members extends AST.Members<AnySchema>>
+/**
+ * @category api interface
+ * @since 1.0.0
+ */
+export interface union<Members extends AST.Members<AnySchema>>
   extends Schema<Schema.To<Members[number]>, Schema.From<Members[number]>, Schema.Context<Members[number]>>
 {
-  readonly members: Members
+  readonly members: Readonly<Members>
 }
 
 class Union<Members extends AST.Members<AnySchema>>
@@ -770,7 +843,11 @@ export function union<Members extends ReadonlyArray<AnySchema>>(
     : never
 }
 
-interface literal<Literal extends AST.LiteralValue> extends Schema<Literal> {
+/**
+ * @category api interface
+ * @since 1.0.0
+ */
+export interface literal<Literal extends AST.LiteralValue> extends Schema<Literal> {
   readonly literal: Literal
 }
 
@@ -780,10 +857,14 @@ class Literal<Literal extends AST.LiteralValue> extends _schema.Schema<Literal> 
   }
 }
 
-interface literals<Literals extends AST.Members<AST.LiteralValue>>
+/**
+ * @category api interface
+ * @since 1.0.0
+ */
+export interface literals<Literals extends AST.Members<AST.LiteralValue>>
   extends union<{ readonly [I in keyof Literals]: Schema<Literals[I]> }>
 {
-  readonly literals: Literals
+  readonly literals: Readonly<Literals>
 }
 
 class Literals<Literals extends AST.Members<AST.LiteralValue>>
@@ -814,7 +895,11 @@ export function literal<Literals extends ReadonlyArray<AST.LiteralValue>>(
     : never
 }
 
-interface nullable<S extends AnySchema> extends union<[S, $null]> {
+/**
+ * @category api interface
+ * @since 1.0.0
+ */
+export interface nullable<S extends AnySchema> extends union<[S, $null]> {
   readonly value: S
 }
 
@@ -830,7 +915,11 @@ class Nullable<S extends AnySchema> extends Union<[S, $null]> {
  */
 export const nullable = <S extends AnySchema>(value: S): nullable<S> => new Nullable(value)
 
-interface orUndefined<S extends AnySchema> extends union<[S, $undefined]> {
+/**
+ * @category api interface
+ * @since 1.0.0
+ */
+export interface orUndefined<S extends AnySchema> extends union<[S, $undefined]> {
   readonly value: S
 }
 
@@ -846,7 +935,11 @@ class OrUndefined<S extends AnySchema> extends Union<[S, $undefined]> {
  */
 export const orUndefined = <S extends AnySchema>(value: S): orUndefined<S> => new OrUndefined(value)
 
-interface nullish<S extends AnySchema> extends union<[S, $undefined, $null]> {
+/**
+ * @category api interface
+ * @since 1.0.0
+ */
+export interface nullish<S extends AnySchema> extends union<[S, $undefined, $null]> {
   readonly value: S
 }
 
@@ -868,14 +961,18 @@ export const nullish = <S extends AnySchema>(value: S): nullish<S> => new Nullis
  */
 export const keyof = <A, I, R>(schema: Schema<A, I, R>): Schema<keyof A> => make(AST.keyof(schema.ast))
 
-interface tuple<Elements extends ReadonlyArray<AnySchema>> extends
+/**
+ * @category api interface
+ * @since 1.0.0
+ */
+export interface tuple<Elements extends ReadonlyArray<AnySchema>> extends
   Schema<
     { readonly [K in keyof Elements]: Schema.To<Elements[K]> },
     { readonly [K in keyof Elements]: Schema.From<Elements[K]> },
     Schema.Context<Elements[number]>
   >
 {
-  readonly elements: Elements
+  readonly elements: Readonly<Elements>
 }
 
 class Tuple<Elements extends ReadonlyArray<AnySchema>> extends _schema.Schema<
@@ -901,34 +998,16 @@ class Tuple<Elements extends ReadonlyArray<AnySchema>> extends _schema.Schema<
 export const tuple = <Elements extends ReadonlyArray<AnySchema>>(...elements: Elements): tuple<Elements> =>
   new Tuple(elements)
 
-interface rest<Tuple extends AnySchema, Rest extends AnySchema> extends
-  Schema<
-    readonly [...Schema.To<Tuple>, ...Array<Schema.To<Rest>>],
-    readonly [...Schema.From<Tuple>, ...Array<Schema.From<Rest>>],
-    Schema.Context<Tuple> | Schema.Context<Rest>
-  >
-{
-  readonly tuple: Tuple
-  readonly rest: Rest
-}
-
-class Rest<Tuple extends AnySchema, Rest extends AnySchema> extends _schema.Schema<
-  readonly [...Schema.To<Tuple>, ...Array<Schema.To<Rest>>],
-  readonly [...Schema.From<Tuple>, ...Array<Schema.From<Rest>>],
-  Schema.Context<Tuple> | Schema.Context<Rest>
-> implements rest<Tuple, Rest> {
-  constructor(readonly tuple: Tuple, readonly rest: Rest) {
-    super(AST.appendRestElement(tuple.ast, rest.ast))
-  }
-}
-
 /**
  * @category combinators
  * @since 1.0.0
  */
 export const rest =
-  <Rest extends AnySchema>(rest: Rest) => <Tuple extends AnySchema>(tuple: Tuple): rest<Tuple, Rest> =>
-    new Rest(tuple, rest)
+  <B, IB, R2>(rest: Schema<B, IB, R2>) =>
+  <A extends ReadonlyArray<any>, I extends ReadonlyArray<any>, R1>(
+    self: Schema<A, I, R1>
+  ): Schema<readonly [...A, ...Array<B>], readonly [...I, ...Array<IB>], R1 | R2> =>
+    make(AST.appendRestElement(self.ast, rest.ast))
 
 /**
  * @category combinators
@@ -952,7 +1031,11 @@ export const optionalElement =
   ): Schema<readonly [...A, B?], readonly [...I, IB?], R1 | R2> =>
     make(AST.appendElement(self.ast, new AST.Element(element.ast, true)))
 
-interface array<Item extends AnySchema>
+/**
+ * @category api interface
+ * @since 1.0.0
+ */
+export interface array<Item extends AnySchema>
   extends Schema<ReadonlyArray<Schema.To<Item>>, ReadonlyArray<Schema.From<Item>>, Schema.Context<Item>>
 {
   readonly item: Item
@@ -973,7 +1056,11 @@ class $Array<Item extends AnySchema>
  */
 export const array = <Item extends AnySchema>(item: Item): array<Item> => new $Array(item)
 
-interface nonEmptyArray<Item extends AnySchema> extends
+/**
+ * @category api interface
+ * @since 1.0.0
+ */
+export interface nonEmptyArray<Item extends AnySchema> extends
   Schema<
     ReadonlyArray.NonEmptyReadonlyArray<Schema.To<Item>>,
     ReadonlyArray.NonEmptyReadonlyArray<Schema.From<Item>>,
@@ -989,7 +1076,7 @@ class NonEmptyArray<Item extends AnySchema> extends _schema.Schema<
   Schema.Context<Item>
 > implements nonEmptyArray<Item> {
   constructor(readonly item: Item) {
-    super(tuple(item).pipe(rest(item)).ast)
+    super(new AST.Tuple([new AST.Element(item.ast, false)], Option.some([item.ast]), true))
   }
 }
 
@@ -1299,6 +1386,7 @@ export type ToOptionalKeys<Fields> = {
 export type StructFields = Record<
   PropertyKey,
   | AnySchema
+  | $never
   | PropertySignature<any, boolean, any, boolean, unknown>
   | PropertySignature<never, boolean, never, boolean, unknown>
 >
@@ -1317,7 +1405,11 @@ export type ToStruct<Fields extends StructFields> =
   & { readonly [K in Exclude<keyof Fields, ToOptionalKeys<Fields>>]: Schema.To<Fields[K]> }
   & { readonly [K in ToOptionalKeys<Fields>]?: Schema.To<Fields[K]> }
 
-interface struct<Fields extends StructFields>
+/**
+ * @category api interface
+ * @since 1.0.0
+ */
+export interface struct<Fields extends StructFields>
   extends Schema<Simplify<ToStruct<Fields>>, Simplify<FromStruct<Fields>>, Schema.Context<Fields[keyof Fields]>>
 {
   readonly fields: Fields
@@ -1523,21 +1615,12 @@ export const pluck: {
 )
 
 /**
- * @category model
+ * @category api interface
  * @since 1.0.0
  */
-export interface BrandSchema<A extends Brand.Brand<any>, I, R> extends Schema<A, I, R>, Brand.Brand.Constructor<A> {}
-
-const appendBrandAnnotation = <B extends string | symbol>(
-  ast: AST.AST,
-  brand: B,
-  options?: DocAnnotations
-): AST.AST => {
-  const annotations = toAnnotations(options)
-  const brands = ast.annotations[AST.BrandAnnotationId] as Array<string> | undefined
-  annotations[AST.BrandAnnotationId] = brands ? [...brands, brand] : [brand]
-  return AST.mergeAnnotations(ast, annotations)
-}
+export interface brand<S extends AnySchema<never>, B extends string | symbol>
+  extends Schema<Schema.To<S> & Brand.Brand<B>, Schema.From<S>>, Brand.Brand.Constructor<Schema.To<S>>
+{}
 
 /**
  * Returns a nominal branded schema by applying a brand to a given schema.
@@ -1560,9 +1643,9 @@ const appendBrandAnnotation = <B extends string | symbol>(
  */
 export const brand =
   <B extends string | symbol, A>(brand: B, options?: DocAnnotations) =>
-  <I>(self: Schema<A, I, never>): BrandSchema<A & Brand.Brand<B>, I, never> => {
+  <S extends AnySchema<never>>(self: S): brand<S, B> => {
     const ast = appendBrandAnnotation(self.ast, brand, options)
-    const schema = make<I, A, never>(ast)
+    const schema = make(ast)
     const validateSync = Parser.validateSync(schema)
     const validateOption = Parser.validateOption(schema)
     const _validateEither = validateEither(schema)
@@ -1588,6 +1671,17 @@ export const brand =
     })
     return out
   }
+
+const appendBrandAnnotation = <B extends string | symbol>(
+  ast: AST.AST,
+  brand: B,
+  options?: DocAnnotations
+): AST.AST => {
+  const annotations = toAnnotations(options)
+  const brands = ast.annotations[AST.BrandAnnotationId] as Array<string> | undefined
+  annotations[AST.BrandAnnotationId] = brands ? [...brands, brand] : [brand]
+  return AST.mergeAnnotations(ast, annotations)
+}
 
 /**
  * @category combinators
@@ -1630,14 +1724,38 @@ export const mutable = <A, I, R>(
 }
 
 /**
+ * @category api interface
+ * @since 1.0.0
+ */
+export interface record<Key extends AnySchema | $never, Value extends AnySchema> extends
+  Schema<
+    { readonly [K in Schema.To<Key>]: Schema.To<Value> },
+    { readonly [K in Schema.From<Key>]: Schema.From<Value> },
+    Schema.Context<Key> | Schema.Context<Value>
+  >
+{
+  readonly key: Key
+  readonly value: Value
+}
+
+class $Record<Key extends AnySchema | $never, Value extends AnySchema> extends _schema.Schema<
+  { readonly [K in Schema.To<Key>]: Schema.To<Value> },
+  { readonly [K in Schema.From<Key>]: Schema.From<Value> },
+  Schema.Context<Key> | Schema.Context<Value>
+> implements record<Key, Value> {
+  constructor(readonly key: Key, readonly value: Value) {
+    super(AST.createRecord(key.ast, value.ast, true))
+  }
+}
+
+/**
  * @category combinators
  * @since 1.0.0
  */
-export const record = <AK extends string | symbol, IK extends string | symbol, R1, AV, IV, R2>(
-  key: Schema<AK, IK, R1>,
-  value: Schema<AV, IV, R2>
-): Schema<{ readonly [K in AK]: AV }, { readonly [K in IK]: IV }, R1 | R2> =>
-  make(AST.createRecord(key.ast, value.ast, true))
+export const record = <Key extends AnySchema | $never, Value extends AnySchema>(
+  key: Key,
+  value: Value
+): record<Key, Value> => new $Record(key, value)
 
 /** @internal */
 export const intersectUnionMembers = (xs: ReadonlyArray<AST.AST>, ys: ReadonlyArray<AST.AST>) => {
@@ -1912,6 +2030,12 @@ export const transform: {
 )
 
 /**
+ * @category api interface
+ * @since 1.0.0
+ */
+export interface transformLiteral<To, From> extends Schema<To, From> {}
+
+/**
  * Creates a new `Schema` which transforms literal values.
  *
  * @example
@@ -1927,7 +2051,7 @@ export const transform: {
 export const transformLiteral = <From extends AST.LiteralValue, To extends AST.LiteralValue>(
   from: From,
   to: To
-): Schema<To, From, never> => transform(literal(from), literal(to), () => to, () => from)
+): transformLiteral<To, From> => transform(literal(from), literal(to), () => to, () => from)
 
 /**
  * Creates a new `Schema` which maps between corresponding literal values.
@@ -1950,8 +2074,8 @@ export const transformLiterals = <
   const A extends AST.Members<readonly [from: AST.LiteralValue, to: AST.LiteralValue]>
 >(
   ...pairs: A
-): Schema<A[number][1], A[number][0], never> =>
-  union(...AST.mapMembers(pairs, ([from, to]) => transformLiteral(from, to)))
+): union<{ -readonly [I in keyof A]: transformLiteral<A[I][1], A[I][0]> }> =>
+  union(...AST.mapMembers(pairs, ([from, to]) => transformLiteral(from, to))) as any
 
 /**
  * Attaches a property signature with the specified key and value to the schema.
@@ -2221,9 +2345,7 @@ export const rename: {
   >(
     self: Schema<A, I, R>,
     mapping: M
-  ): Schema<Simplify<Rename<A, M>>, I, R> => {
-    return make(AST.rename(self.ast, mapping))
-  }
+  ): Schema<Simplify<Rename<A, M>>, I, R> => make(AST.rename(self.ast, mapping))
 )
 
 /**
@@ -3023,6 +3145,12 @@ export const clamp =
     )
 
 /**
+ * @category api interface
+ * @since 1.0.0
+ */
+export interface NumberFromString extends Schema<number, string> {}
+
+/**
  * This schema transforms a `string` into a `number` by parsing the string using the `Number` function.
  *
  * It returns an error if the value can't be converted (for example when non-numeric characters are provided).
@@ -3032,7 +3160,7 @@ export const clamp =
  * @category number constructors
  * @since 1.0.0
  */
-export const NumberFromString: Schema<number, string> = transformOrFail(
+export const NumberFromString: NumberFromString = transformOrFail(
   string,
   number,
   (s, _, ast) => ParseResult.fromOption(N.parse(s), () => new ParseResult.Type(ast, s)),
@@ -3135,12 +3263,18 @@ export const Not: Schema<boolean> = transform(
 )
 
 /**
+ * @category api interface
+ * @since 1.0.0
+ */
+export interface $symbol extends Schema<symbol, string> {}
+
+/**
  * This schema transforms a `string` into a `symbol`.
  *
  * @category symbol transformations
  * @since 1.0.0
  */
-export const symbol: Schema<symbol, string> = transform(
+export const symbol: $symbol = transform(
   string,
   symbolFromSelf,
   (s) => Symbol.for(s),
@@ -3345,6 +3479,12 @@ export const clampBigint =
     )
 
 /**
+ * @category api interface
+ * @since 1.0.0
+ */
+export interface $bigint extends Schema<bigint, string> {}
+
+/**
  * This schema transforms a `string` into a `bigint` by parsing the string using the `BigInt` function.
  *
  * It returns an error if the value can't be converted (for example when non-numeric characters are provided).
@@ -3352,7 +3492,7 @@ export const clampBigint =
  * @category bigint transformations
  * @since 1.0.0
  */
-export const bigint: Schema<bigint, string> = transformOrFail(
+export const bigint: $bigint = transformOrFail(
   string,
   bigintFromSelf,
   (s, _, ast) => {

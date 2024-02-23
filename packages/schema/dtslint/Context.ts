@@ -3,9 +3,13 @@ import * as Schema from "@effect/schema/Schema"
 import * as Serializable from "@effect/schema/Serializable"
 import { Context, Effect, Option } from "effect"
 
-declare const aContext: Schema.Schema<string, string, "a">
-declare const bContext: Schema.Schema<number, number, "b">
-declare const cContext: Schema.Schema<string, string, "c">
+interface aContext extends Schema.Schema<string, string, "a"> {}
+interface bContext extends Schema.Schema<number, number, "b"> {}
+interface cContext extends Schema.Schema<string, string, "c"> {}
+
+declare const aContext: aContext
+declare const bContext: bContext
+declare const cContext: cContext
 
 const Taga = Context.GenericTag<"a", string>("a")
 const Tagb = Context.GenericTag<"b", number>("b")
@@ -92,6 +96,9 @@ Schema.declare(
 // ---------------------------------------------
 
 // $ExpectType Schema<string | number, string | number, "a" | "b">
+Schema.asSchema(Schema.union(aContext, bContext))
+
+// $ExpectType union<[aContext, bContext]>
 Schema.union(aContext, bContext)
 
 // ---------------------------------------------
@@ -99,6 +106,9 @@ Schema.union(aContext, bContext)
 // ---------------------------------------------
 
 // $ExpectType Schema<readonly [string, number], readonly [string, number], "a" | "b">
+Schema.asSchema(Schema.tuple(aContext, bContext))
+
+// $ExpectType tuple<[aContext, bContext]>
 Schema.tuple(aContext, bContext)
 
 // ---------------------------------------------
@@ -127,6 +137,9 @@ Schema.tuple(aContext).pipe(Schema.optionalElement(bContext))
 // ---------------------------------------------
 
 // $ExpectType Schema<readonly string[], readonly string[], "a">
+Schema.asSchema(Schema.array(aContext))
+
+// $ExpectType array<aContext>
 Schema.array(aContext)
 
 // ---------------------------------------------
@@ -134,6 +147,9 @@ Schema.array(aContext)
 // ---------------------------------------------
 
 // $ExpectType Schema<readonly [string, ...string[]], readonly [string, ...string[]], "a">
+Schema.asSchema(Schema.nonEmptyArray(aContext))
+
+// $ExpectType nonEmptyArray<aContext>
 Schema.nonEmptyArray(aContext)
 
 // ---------------------------------------------
@@ -162,6 +178,9 @@ Schema.optional(aContext)
 // ---------------------------------------------
 
 // $ExpectType Schema<{ readonly a: string; readonly b: number; }, { readonly a: string; readonly b: number; }, "a" | "b">
+Schema.asSchema(Schema.struct({ a: aContext, b: bContext }))
+
+// $ExpectType struct<{ a: aContext; b: bContext; }>
 Schema.struct({ a: aContext, b: bContext })
 
 // ---------------------------------------------
@@ -211,6 +230,9 @@ Schema.mutable(Schema.struct({ a: aContext, b: bContext }))
 // ---------------------------------------------
 
 // $ExpectType Schema<{ readonly [x: string]: number; }, { readonly [x: string]: number; }, "a" | "b">
+Schema.asSchema(Schema.record(aContext, bContext))
+
+// $ExpectType record<aContext, bContext>
 Schema.record(aContext, bContext)
 
 // ---------------------------------------------
