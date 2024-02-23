@@ -872,7 +872,8 @@ class Literals<Literals extends AST.Members<AST.LiteralValue>>
   implements literals<Literals>
 {
   constructor(readonly literals: Literals) {
-    super(literals.map((literal) => new Literal(literal)) as any)
+    const members = literals.map((literal) => new Literal(literal))
+    super(members as any)
   }
 }
 
@@ -1035,18 +1036,18 @@ export const optionalElement =
  * @category api interface
  * @since 1.0.0
  */
-export interface array<Item extends AnySchema>
-  extends Schema<ReadonlyArray<Schema.To<Item>>, ReadonlyArray<Schema.From<Item>>, Schema.Context<Item>>
+export interface array<Value extends AnySchema>
+  extends Schema<ReadonlyArray<Schema.To<Value>>, ReadonlyArray<Schema.From<Value>>, Schema.Context<Value>>
 {
-  readonly item: Item
+  readonly value: Value
 }
 
 class $Array<Item extends AnySchema>
   extends _schema.Schema<ReadonlyArray<Schema.To<Item>>, ReadonlyArray<Schema.From<Item>>, Schema.Context<Item>>
   implements array<Item>
 {
-  constructor(readonly item: Item) {
-    super(new AST.Tuple([], Option.some([item.ast]), true))
+  constructor(readonly value: Item) {
+    super(new AST.Tuple([], Option.some([value.ast]), true))
   }
 }
 
@@ -1054,7 +1055,7 @@ class $Array<Item extends AnySchema>
  * @category combinators
  * @since 1.0.0
  */
-export const array = <Item extends AnySchema>(item: Item): array<Item> => new $Array(item)
+export const array = <Value extends AnySchema>(value: Value): array<Value> => new $Array(value)
 
 /**
  * @category api interface
@@ -1067,16 +1068,16 @@ export interface nonEmptyArray<Item extends AnySchema> extends
     Schema.Context<Item>
   >
 {
-  readonly item: Item
+  readonly value: Item
 }
 
-class NonEmptyArray<Item extends AnySchema> extends _schema.Schema<
-  ReadonlyArray.NonEmptyReadonlyArray<Schema.To<Item>>,
-  ReadonlyArray.NonEmptyReadonlyArray<Schema.From<Item>>,
-  Schema.Context<Item>
-> implements nonEmptyArray<Item> {
-  constructor(readonly item: Item) {
-    super(new AST.Tuple([new AST.Element(item.ast, false)], Option.some([item.ast]), true))
+class NonEmptyArray<Value extends AnySchema> extends _schema.Schema<
+  ReadonlyArray.NonEmptyReadonlyArray<Schema.To<Value>>,
+  ReadonlyArray.NonEmptyReadonlyArray<Schema.From<Value>>,
+  Schema.Context<Value>
+> implements nonEmptyArray<Value> {
+  constructor(readonly value: Value) {
+    super(new AST.Tuple([new AST.Element(value.ast, false)], Option.some([value.ast]), true))
   }
 }
 
@@ -1084,7 +1085,7 @@ class NonEmptyArray<Item extends AnySchema> extends _schema.Schema<
  * @category combinators
  * @since 1.0.0
  */
-export const nonEmptyArray = <Item extends AnySchema>(item: Item): nonEmptyArray<Item> => new NonEmptyArray(item)
+export const nonEmptyArray = <Value extends AnySchema>(value: Value): nonEmptyArray<Value> => new NonEmptyArray(value)
 
 /**
  * @since 1.0.0
@@ -1727,23 +1728,23 @@ export const mutable = <A, I, R>(
  * @category api interface
  * @since 1.0.0
  */
-export interface record<Key extends AnySchema | $never, Value extends AnySchema> extends
+export interface record<K extends AnySchema | $never, V extends AnySchema> extends
   Schema<
-    { readonly [K in Schema.To<Key>]: Schema.To<Value> },
-    { readonly [K in Schema.From<Key>]: Schema.From<Value> },
-    Schema.Context<Key> | Schema.Context<Value>
+    { readonly [Key in Schema.To<K>]: Schema.To<V> },
+    { readonly [Key in Schema.From<K>]: Schema.From<V> },
+    Schema.Context<K> | Schema.Context<V>
   >
 {
-  readonly key: Key
-  readonly value: Value
+  readonly key: K
+  readonly value: V
 }
 
-class $Record<Key extends AnySchema | $never, Value extends AnySchema> extends _schema.Schema<
-  { readonly [K in Schema.To<Key>]: Schema.To<Value> },
-  { readonly [K in Schema.From<Key>]: Schema.From<Value> },
-  Schema.Context<Key> | Schema.Context<Value>
-> implements record<Key, Value> {
-  constructor(readonly key: Key, readonly value: Value) {
+class $Record<K extends AnySchema | $never, V extends AnySchema> extends _schema.Schema<
+  { readonly [Key in Schema.To<K>]: Schema.To<V> },
+  { readonly [Key in Schema.From<K>]: Schema.From<V> },
+  Schema.Context<K> | Schema.Context<V>
+> implements record<K, V> {
+  constructor(readonly key: K, readonly value: V) {
     super(AST.createRecord(key.ast, value.ast, true))
   }
 }
@@ -1752,10 +1753,10 @@ class $Record<Key extends AnySchema | $never, Value extends AnySchema> extends _
  * @category combinators
  * @since 1.0.0
  */
-export const record = <Key extends AnySchema | $never, Value extends AnySchema>(
-  key: Key,
-  value: Value
-): record<Key, Value> => new $Record(key, value)
+export const record = <K extends AnySchema | $never, V extends AnySchema>(
+  key: K,
+  value: V
+): record<K, V> => new $Record(key, value)
 
 /** @internal */
 export const intersectUnionMembers = (xs: ReadonlyArray<AST.AST>, ys: ReadonlyArray<AST.AST>) => {
@@ -4221,59 +4222,135 @@ export const optionFromSelf = <A, I, R>(
 }
 
 /**
- * @category Option transformations
+ * @category api interface
  * @since 1.0.0
  */
-export const option = <A, I, R>(
-  value: Schema<A, I, R>
-): Schema<Option.Option<A>, OptionFrom<I>, R> =>
-  transform(
-    optionFrom(value),
-    optionFromSelf(to(value)),
-    optionDecode,
-    Option.match({
-      onNone: () => (({
-        _tag: "None"
-      }) as const),
-      onSome: (value) => (({
-        _tag: "Some",
-        value
-      }) as const)
-    })
-  )
+export interface option<Value extends AnySchema>
+  extends Schema<Option.Option<Schema.To<Value>>, Option.Option<Schema.From<Value>>, Schema.Context<Value>>
+{
+  readonly value: Value
+}
+
+class $Option<Value extends AnySchema>
+  extends _schema.Schema<Option.Option<Schema.To<Value>>, Option.Option<Schema.From<Value>>, Schema.Context<Value>>
+  implements option<Value>
+{
+  constructor(readonly value: Value) {
+    const schema = transform(
+      optionFrom(value),
+      optionFromSelf(to(value)),
+      optionDecode,
+      Option.match({
+        onNone: () => (({
+          _tag: "None"
+        }) as const),
+        onSome: (value) => (({
+          _tag: "Some",
+          value
+        }) as const)
+      })
+    )
+    super(schema.ast)
+  }
+}
 
 /**
  * @category Option transformations
  * @since 1.0.0
  */
-export const optionFromNullable = <A, I, R>(
-  value: Schema<A, I, R>
-): Schema<Option.Option<A>, I | null, R> =>
-  transform(nullable(value), optionFromSelf(to(value)), Option.fromNullable, Option.getOrNull)
+export const option = <Value extends AnySchema>(
+  value: Value
+): option<Value> => new $Option(value)
+
+/**
+ * @category api interface
+ * @since 1.0.0
+ */
+export interface optionFromNullable<Value extends AnySchema>
+  extends Schema<Option.Option<Schema.To<Value>>, Schema.From<Value> | null, Schema.Context<Value>>
+{
+  readonly value: Value
+}
+
+class OptionFromNullable<Value extends AnySchema>
+  extends _schema.Schema<Option.Option<Schema.To<Value>>, Schema.From<Value> | null, Schema.Context<Value>>
+  implements optionFromNullable<Value>
+{
+  constructor(readonly value: Value) {
+    const schema = transform(nullable(value), optionFromSelf(to(value)), Option.fromNullable, Option.getOrNull)
+    super(schema.ast)
+  }
+}
 
 /**
  * @category Option transformations
  * @since 1.0.0
  */
-export const optionFromNullish = <A, I, R>(
-  value: Schema<A, I, R>,
+export const optionFromNullable = <Value extends AnySchema>(
+  value: Value
+): optionFromNullable<Value> => new OptionFromNullable(value)
+
+/**
+ * @category api interface
+ * @since 1.0.0
+ */
+export interface optionFromNullish<Value extends AnySchema>
+  extends Schema<Option.Option<Schema.To<Value>>, Schema.From<Value> | null | undefined, Schema.Context<Value>>
+{
+  readonly value: Value
+}
+
+class OptionFromNullish<Value extends AnySchema>
+  extends _schema.Schema<Option.Option<Schema.To<Value>>, Schema.From<Value> | null | undefined, Schema.Context<Value>>
+  implements optionFromNullish<Value>
+{
+  constructor(readonly value: Value, onNoneEncoding: null | undefined) {
+    const schema = transform(
+      nullish(value),
+      optionFromSelf(to(value)),
+      Option.fromNullable,
+      onNoneEncoding === null ? Option.getOrNull : Option.getOrUndefined
+    )
+    super(schema.ast)
+  }
+}
+
+/**
+ * @category Option transformations
+ * @since 1.0.0
+ */
+export const optionFromNullish = <Value extends AnySchema>(
+  value: Value,
   onNoneEncoding: null | undefined
-): Schema<Option.Option<A>, I | null | undefined, R> =>
-  transform(
-    nullish(value),
-    optionFromSelf(to(value)),
-    Option.fromNullable,
-    onNoneEncoding === null ? Option.getOrNull : Option.getOrUndefined
-  )
+): optionFromNullish<Value> => new OptionFromNullish(value, onNoneEncoding)
+
+/**
+ * @category api interface
+ * @since 1.0.0
+ */
+export interface optionFromOrUndefined<Value extends AnySchema>
+  extends Schema<Option.Option<Schema.To<Value>>, Schema.From<Value> | undefined, Schema.Context<Value>>
+{
+  readonly value: Value
+}
+
+class OptionFromOrUndefined<Value extends AnySchema>
+  extends _schema.Schema<Option.Option<Schema.To<Value>>, Schema.From<Value> | undefined, Schema.Context<Value>>
+  implements optionFromOrUndefined<Value>
+{
+  constructor(readonly value: Value) {
+    const schema = transform(orUndefined(value), optionFromSelf(to(value)), Option.fromNullable, Option.getOrUndefined)
+    super(schema.ast)
+  }
+}
 
 /**
  * @category Option transformations
  * @since 1.0.0
  */
-export const optionFromOrUndefined = <A, I, R>(
-  value: Schema<A, I, R>
-): Schema<Option.Option<A>, I | undefined, R> =>
-  transform(orUndefined(value), optionFromSelf(to(value)), Option.fromNullable, Option.getOrUndefined)
+export const optionFromOrUndefined = <Value extends AnySchema>(
+  value: Value
+): optionFromOrUndefined<Value> => new OptionFromOrUndefined(value)
 
 /**
  * @category Either utils
@@ -4352,25 +4429,49 @@ const eitherParse = <RE, E, RA, A>(
     : ParseResult.fail(new ParseResult.Type(ast, u))
 
 /**
+ * @category api interface
+ * @since 1.0.0
+ */
+export interface eitherFromSelf<R extends AnySchema, L extends AnySchema> extends
+  Schema<
+    Either.Either<Schema.To<R>, Schema.To<L>>,
+    Either.Either<Schema.From<R>, Schema.From<L>>,
+    Schema.Context<R> | Schema.Context<L>
+  >
+{
+  readonly right: R
+  readonly left: L
+}
+
+class EitherFromSelf<R extends AnySchema, L extends AnySchema> extends _schema.Schema<
+  Either.Either<Schema.To<R>, Schema.To<L>>,
+  Either.Either<Schema.From<R>, Schema.From<L>>,
+  Schema.Context<R> | Schema.Context<L>
+> implements eitherFromSelf<R, L> {
+  constructor(readonly right: R, readonly left: L) {
+    const schema = declare(
+      [left, right],
+      (left, right) => eitherParse(ParseResult.decodeUnknown(left), ParseResult.decodeUnknown(right)),
+      (left, right) => eitherParse(ParseResult.encodeUnknown(left), ParseResult.encodeUnknown(right)),
+      {
+        description: `Either<${format(left)}, ${format(right)}>`,
+        pretty: eitherPretty,
+        arbitrary: eitherArbitrary,
+        equivalence: Either.getEquivalence
+      }
+    )
+    super(schema.ast)
+  }
+}
+
+/**
  * @category Either transformations
  * @since 1.0.0
  */
-export const eitherFromSelf = <E, IE, RE, A, IA, RA>({ left, right }: {
-  readonly left: Schema<E, IE, RE>
-  readonly right: Schema<A, IA, RA>
-}): Schema<Either.Either<A, E>, Either.Either<IA, IE>, RE | RA> => {
-  return declare(
-    [left, right],
-    (left, right) => eitherParse(ParseResult.decodeUnknown(left), ParseResult.decodeUnknown(right)),
-    (left, right) => eitherParse(ParseResult.encodeUnknown(left), ParseResult.encodeUnknown(right)),
-    {
-      description: `Either<${format(left)}, ${format(right)}>`,
-      pretty: eitherPretty,
-      arbitrary: eitherArbitrary,
-      equivalence: Either.getEquivalence
-    }
-  )
-}
+export const eitherFromSelf = <R extends AnySchema, L extends AnySchema>({ left, right }: {
+  readonly left: L
+  readonly right: R
+}): eitherFromSelf<R, L> => new EitherFromSelf(right, left)
 
 const makeLeftFrom = <E>(left: E) => (({
   _tag: "Left",
@@ -4382,19 +4483,79 @@ const makeRightFrom = <A>(right: A) => (({
 }) as const)
 
 /**
+ * @category api interface
+ * @since 1.0.0
+ */
+export interface either<R extends AnySchema, L extends AnySchema> extends
+  Schema<
+    Either.Either<Schema.To<R>, Schema.To<L>>,
+    EitherFrom<Schema.From<R>, Schema.From<L>>,
+    Schema.Context<R> | Schema.Context<L>
+  >
+{
+  readonly right: R
+  readonly left: L
+}
+
+class $Either<R extends AnySchema, L extends AnySchema> extends _schema.Schema<
+  Either.Either<Schema.To<R>, Schema.To<L>>,
+  EitherFrom<Schema.From<R>, Schema.From<L>>,
+  Schema.Context<R> | Schema.Context<L>
+> implements either<R, L> {
+  constructor(readonly right: R, readonly left: L) {
+    const schema = transform(
+      eitherFrom(left, right),
+      eitherFromSelf({ left: to(left), right: to(right) }),
+      eitherDecode,
+      Either.match({ onLeft: makeLeftFrom, onRight: makeRightFrom })
+    )
+    super(schema.ast)
+  }
+}
+
+/**
  * @category Either transformations
  * @since 1.0.0
  */
-export const either = <E, IE, R1, A, IA, R2>({ left, right }: {
-  readonly left: Schema<E, IE, R1>
-  readonly right: Schema<A, IA, R2>
-}): Schema<Either.Either<A, E>, EitherFrom<IE, IA>, R1 | R2> =>
-  transform(
-    eitherFrom(left, right),
-    eitherFromSelf({ left: to(left), right: to(right) }),
-    eitherDecode,
-    Either.match({ onLeft: makeLeftFrom, onRight: makeRightFrom })
-  )
+export const either = <R extends AnySchema, L extends AnySchema>({ left, right }: {
+  readonly left: L
+  readonly right: R
+}): either<R, L> => new $Either(right, left)
+
+/**
+ * @category api interface
+ * @since 1.0.0
+ */
+export interface eitherFromUnion<R extends AnySchema, L extends AnySchema> extends
+  Schema<
+    Either.Either<Schema.To<R>, Schema.To<L>>,
+    Schema.From<R> | Schema.From<L>,
+    Schema.Context<R> | Schema.Context<L>
+  >
+{
+  readonly right: R
+  readonly left: L
+}
+
+class EitherFromUnion<R extends AnySchema, L extends AnySchema> extends _schema.Schema<
+  Either.Either<Schema.To<R>, Schema.To<L>>,
+  Schema.From<R> | Schema.From<L>,
+  Schema.Context<R> | Schema.Context<L>
+> implements eitherFromUnion<R, L> {
+  constructor(readonly right: R, readonly left: L) {
+    const toleft = to(left)
+    const toright = to(right)
+    const fromLeft = transform(left, leftFrom(toleft), makeLeftFrom, (l) => l.left)
+    const fromRight = transform(right, rightFrom(toright), makeRightFrom, (r) => r.right)
+    const schema = transform(
+      union(fromRight, fromLeft),
+      eitherFromSelf({ left: toleft, right: toright }),
+      (from) => from._tag === "Left" ? Either.left(from.left) : Either.right(from.right),
+      Either.match({ onLeft: makeLeftFrom, onRight: makeRightFrom })
+    )
+    super(schema.ast)
+  }
+}
 
 /**
  * @example
@@ -4406,21 +4567,10 @@ export const either = <E, IE, R1, A, IA, R2>({ left, right }: {
  * @category Either transformations
  * @since 1.0.0
  */
-export const eitherFromUnion = <EA, EI, R1, AA, AI, R2>({ left, right }: {
-  readonly left: Schema<EA, EI, R1>
-  readonly right: Schema<AA, AI, R2>
-}): Schema<Either.Either<AA, EA>, EI | AI, R1 | R2> => {
-  const toleft = to(left)
-  const toright = to(right)
-  const fromLeft = transform(left, leftFrom(toleft), makeLeftFrom, (l) => l.left)
-  const fromRight = transform(right, rightFrom(toright), makeRightFrom, (r) => r.right)
-  return transform(
-    union(fromRight, fromLeft),
-    eitherFromSelf({ left: toleft, right: toright }),
-    (from) => from._tag === "Left" ? Either.left(from.left) : Either.right(from.right),
-    Either.match({ onLeft: makeLeftFrom, onRight: makeRightFrom })
-  )
-}
+export const eitherFromUnion = <R extends AnySchema, L extends AnySchema>({ left, right }: {
+  readonly left: L
+  readonly right: R
+}): eitherFromUnion<R, L> => new EitherFromUnion(right, left)
 
 const isMap = (u: unknown): u is Map<unknown, unknown> => u instanceof Map
 
@@ -4460,40 +4610,89 @@ const readonlyMapParse = <R, K, V>(
     : ParseResult.fail(new ParseResult.Type(ast, u))
 
 /**
- * @category ReadonlyMap transformations
+ * @category api interface
  * @since 1.0.0
  */
-export const readonlyMapFromSelf = <K, IK, RK, V, IV, RV>({ key, value }: {
-  readonly key: Schema<K, IK, RK>
-  readonly value: Schema<V, IV, RV>
-}): Schema<ReadonlyMap<K, V>, ReadonlyMap<IK, IV>, RK | RV> => {
-  return declare(
-    [key, value],
-    (key, value) => readonlyMapParse(ParseResult.decodeUnknown(array(tuple(key, value)))),
-    (key, value) => readonlyMapParse(ParseResult.encodeUnknown(array(tuple(key, value)))),
-    {
-      description: `ReadonlyMap<${format(key)}, ${format(value)}>`,
-      pretty: readonlyMapPretty,
-      arbitrary: readonlyMapArbitrary,
-      equivalence: readonlyMapEquivalence
-    }
-  )
+export interface readonlyMapFromSelf<K extends AnySchema, V extends AnySchema> extends
+  Schema<
+    ReadonlyMap<Schema.To<K>, Schema.To<V>>,
+    ReadonlyMap<Schema.From<K>, Schema.From<V>>,
+    Schema.Context<K> | Schema.Context<V>
+  >
+{
+  readonly key: K
+  readonly value: V
+}
+
+class ReadonlyMapFromSelf<K extends AnySchema, V extends AnySchema> extends _schema.Schema<
+  ReadonlyMap<Schema.To<K>, Schema.To<V>>,
+  ReadonlyMap<Schema.From<K>, Schema.From<V>>,
+  Schema.Context<K> | Schema.Context<V>
+> implements readonlyMapFromSelf<K, V> {
+  constructor(readonly key: K, readonly value: V) {
+    const schema = declare(
+      [key, value],
+      (key, value) => readonlyMapParse(ParseResult.decodeUnknown(array(tuple(key, value)))),
+      (key, value) => readonlyMapParse(ParseResult.encodeUnknown(array(tuple(key, value)))),
+      {
+        description: `ReadonlyMap<${format(key)}, ${format(value)}>`,
+        pretty: readonlyMapPretty,
+        arbitrary: readonlyMapArbitrary,
+        equivalence: readonlyMapEquivalence
+      }
+    )
+    super(schema.ast)
+  }
 }
 
 /**
  * @category ReadonlyMap transformations
  * @since 1.0.0
  */
-export const readonlyMap = <K, IK, RK, V, IV, RV>({ key, value }: {
-  readonly key: Schema<K, IK, RK>
-  readonly value: Schema<V, IV, RV>
-}): Schema<ReadonlyMap<K, V>, ReadonlyArray<readonly [IK, IV]>, RK | RV> =>
-  transform(
-    array(tuple(key, value)),
-    readonlyMapFromSelf({ key: to(key), value: to(value) }),
-    (as) => new Map(as),
-    (map) => Array.from(map.entries())
-  )
+export const readonlyMapFromSelf = <K extends AnySchema, V extends AnySchema>({ key, value }: {
+  readonly key: K
+  readonly value: V
+}): readonlyMapFromSelf<K, V> => new ReadonlyMapFromSelf(key, value)
+
+/**
+ * @category api interface
+ * @since 1.0.0
+ */
+export interface readonlyMap<K extends AnySchema, V extends AnySchema> extends
+  Schema<
+    ReadonlyMap<Schema.To<K>, Schema.To<V>>,
+    ReadonlyArray<readonly [Schema.From<K>, Schema.From<V>]>,
+    Schema.Context<K> | Schema.Context<V>
+  >
+{
+  readonly key: K
+  readonly value: V
+}
+
+class $ReadonlyMap<K extends AnySchema, V extends AnySchema> extends _schema.Schema<
+  ReadonlyMap<Schema.To<K>, Schema.To<V>>,
+  ReadonlyArray<readonly [Schema.From<K>, Schema.From<V>]>,
+  Schema.Context<K> | Schema.Context<V>
+> implements readonlyMap<K, V> {
+  constructor(readonly key: K, readonly value: V) {
+    const schema = transform(
+      array(tuple(key, value)),
+      readonlyMapFromSelf({ key: to(key), value: to(value) }),
+      (as) => new Map(as),
+      (map) => Array.from(map.entries())
+    )
+    super(schema.ast)
+  }
+}
+
+/**
+ * @category ReadonlyMap transformations
+ * @since 1.0.0
+ */
+export const readonlyMap = <K extends AnySchema, V extends AnySchema>({ key, value }: {
+  readonly key: K
+  readonly value: V
+}): readonlyMap<K, V> => new $ReadonlyMap(key, value)
 
 const isSet = (u: unknown): u is Set<unknown> => u instanceof Set
 
@@ -4519,36 +4718,83 @@ const readonlySetParse = <R, A>(
     : ParseResult.fail(new ParseResult.Type(ast, u))
 
 /**
- * @category ReadonlySet transformations
+ * @category api interface
  * @since 1.0.0
  */
-export const readonlySetFromSelf = <A, I, R>(
-  item: Schema<A, I, R>
-): Schema<ReadonlySet<A>, ReadonlySet<I>, R> => {
-  return declare(
-    [item],
-    (item) => readonlySetParse(ParseResult.decodeUnknown(array(item))),
-    (item) => readonlySetParse(ParseResult.encodeUnknown(array(item))),
-    {
-      description: `ReadonlySet<${format(item)}>`,
-      pretty: readonlySetPretty,
-      arbitrary: readonlySetArbitrary,
-      equivalence: readonlySetEquivalence
-    }
-  )
+export interface readonlySetFromSelf<Value extends AnySchema> extends
+  Schema<
+    ReadonlySet<Schema.To<Value>>,
+    ReadonlySet<Schema.From<Value>>,
+    Schema.Context<Value>
+  >
+{
+  readonly value: Value
+}
+
+class ReadonlySetFromSelf<Value extends AnySchema> extends _schema.Schema<
+  ReadonlySet<Schema.To<Value>>,
+  ReadonlySet<Schema.From<Value>>,
+  Schema.Context<Value>
+> implements readonlySetFromSelf<Value> {
+  constructor(readonly value: Value) {
+    const schema = declare(
+      [value],
+      (value) => readonlySetParse(ParseResult.decodeUnknown(array(value))),
+      (value) => readonlySetParse(ParseResult.encodeUnknown(array(value))),
+      {
+        description: `ReadonlySet<${format(value)}>`,
+        pretty: readonlySetPretty,
+        arbitrary: readonlySetArbitrary,
+        equivalence: readonlySetEquivalence
+      }
+    )
+    super(schema.ast)
+  }
 }
 
 /**
  * @category ReadonlySet transformations
  * @since 1.0.0
  */
-export const readonlySet = <A, I, R>(item: Schema<A, I, R>): Schema<ReadonlySet<A>, ReadonlyArray<I>, R> =>
-  transform(
-    array(item),
-    readonlySetFromSelf(to(item)),
-    (as) => new Set(as),
-    (set) => Array.from(set)
-  )
+export const readonlySetFromSelf = <Value extends AnySchema>(
+  value: Value
+): readonlySetFromSelf<Value> => new ReadonlySetFromSelf(value)
+
+/**
+ * @category api interface
+ * @since 1.0.0
+ */
+export interface readonlySet<Value extends AnySchema> extends
+  Schema<
+    ReadonlySet<Schema.To<Value>>,
+    ReadonlyArray<Schema.From<Value>>,
+    Schema.Context<Value>
+  >
+{
+  readonly value: Value
+}
+
+class $ReadonlySet<Value extends AnySchema> extends _schema.Schema<
+  ReadonlySet<Schema.To<Value>>,
+  ReadonlyArray<Schema.From<Value>>,
+  Schema.Context<Value>
+> implements readonlySet<Value> {
+  constructor(readonly value: Value) {
+    const schema = transform(
+      array(value),
+      readonlySetFromSelf(to(value)),
+      (as) => new Set(as),
+      (set) => Array.from(set)
+    )
+    super(schema.ast)
+  }
+}
+
+/**
+ * @category ReadonlySet transformations
+ * @since 1.0.0
+ */
+export const readonlySet = <Value extends AnySchema>(value: Value): readonlySet<Value> => new $ReadonlySet(value)
 
 const bigDecimalPretty = (): Pretty.Pretty<BigDecimal.BigDecimal> => (val) =>
   `BigDecimal(${BigDecimal.format(BigDecimal.normalize(val))})`
@@ -4557,10 +4803,16 @@ const bigDecimalArbitrary = (): Arbitrary<BigDecimal.BigDecimal> => (fc) =>
   fc.tuple(fc.bigInt(), fc.integer()).map(([value, scale]) => BigDecimal.make(value, scale))
 
 /**
+ * @category api interface
+ * @since 1.0.0
+ */
+export interface BigDecimalFromSelf extends Schema<BigDecimal.BigDecimal> {}
+
+/**
  * @category BigDecimal constructors
  * @since 1.0.0
  */
-export const BigDecimalFromSelf: Schema<BigDecimal.BigDecimal> = declare(
+export const BigDecimalFromSelf: BigDecimalFromSelf = declare(
   BigDecimal.isBigDecimal,
   {
     identifier: "BigDecimalFromSelf",
@@ -4570,7 +4822,13 @@ export const BigDecimalFromSelf: Schema<BigDecimal.BigDecimal> = declare(
   }
 )
 
-const _BigDecimal: Schema<BigDecimal.BigDecimal, string> = transformOrFail(
+/**
+ * @category api interface
+ * @since 1.0.0
+ */
+export interface $BigDecimal extends Schema<BigDecimal.BigDecimal, string> {}
+
+const _BigDecimal: $BigDecimal = transformOrFail(
   string,
   BigDecimalFromSelf,
   (num, _, ast) =>
@@ -4590,13 +4848,19 @@ export {
 }
 
 /**
+ * @category api interface
+ * @since 1.0.0
+ */
+export interface BigDecimalFromNumber extends Schema<BigDecimal.BigDecimal, number> {}
+
+/**
  * A schema that transforms a `number` into a `BigDecimal`.
  * When encoding, this Schema will produce incorrect results if the BigDecimal exceeds the 64-bit range of a number.
  *
  * @category BigDecimal transformations
  * @since 1.0.0
  */
-export const BigDecimalFromNumber: Schema<BigDecimal.BigDecimal, number> = transformOrFail(
+export const BigDecimalFromNumber: BigDecimalFromNumber = transformOrFail(
   number,
   BigDecimalFromSelf,
   (num) => ParseResult.succeed(BigDecimal.fromNumber(num)),
@@ -4914,34 +5178,71 @@ const chunkParse = <R, A>(
     : ParseResult.fail(new ParseResult.Type(ast, u))
 
 /**
- * @category Chunk transformations
+ * @category api interface
  * @since 1.0.0
  */
-export const chunkFromSelf = <A, I, R>(item: Schema<A, I, R>): Schema<Chunk.Chunk<A>, Chunk.Chunk<I>, R> => {
-  return declare(
-    [item],
-    (item) => chunkParse(ParseResult.decodeUnknown(array(item))),
-    (item) => chunkParse(ParseResult.encodeUnknown(array(item))),
-    {
-      description: `Chunk<${format(item)}>`,
-      pretty: chunkPretty,
-      arbitrary: chunkArbitrary,
-      equivalence: Chunk.getEquivalence
-    }
-  )
+export interface chunkFromSelf<Value extends AnySchema>
+  extends Schema<Chunk.Chunk<Schema.To<Value>>, Chunk.Chunk<Schema.From<Value>>, Schema.Context<Value>>
+{
+  readonly value: Value
+}
+
+class ChunkFromSelf<Value extends AnySchema>
+  extends _schema.Schema<Chunk.Chunk<Schema.To<Value>>, Chunk.Chunk<Schema.From<Value>>, Schema.Context<Value>>
+  implements chunkFromSelf<Value>
+{
+  constructor(readonly value: Value) {
+    const schema = declare(
+      [value],
+      (value) => chunkParse(ParseResult.decodeUnknown(array(value))),
+      (value) => chunkParse(ParseResult.encodeUnknown(array(value))),
+      {
+        description: `Chunk<${format(value)}>`,
+        pretty: chunkPretty,
+        arbitrary: chunkArbitrary,
+        equivalence: Chunk.getEquivalence
+      }
+    )
+    super(schema.ast)
+  }
 }
 
 /**
  * @category Chunk transformations
  * @since 1.0.0
  */
-export const chunk = <A, I, R>(item: Schema<A, I, R>): Schema<Chunk.Chunk<A>, ReadonlyArray<I>, R> =>
-  transform(
-    array(item),
-    chunkFromSelf(to(item)),
-    (as) => as.length === 0 ? Chunk.empty() : Chunk.fromIterable(as),
-    Chunk.toReadonlyArray
-  )
+export const chunkFromSelf = <Value extends AnySchema>(value: Value): chunkFromSelf<Value> => new ChunkFromSelf(value)
+
+/**
+ * @category api interface
+ * @since 1.0.0
+ */
+export interface chunk<Value extends AnySchema>
+  extends Schema<Chunk.Chunk<Schema.To<Value>>, ReadonlyArray<Schema.From<Value>>, Schema.Context<Value>>
+{
+  readonly value: Value
+}
+
+class $Chunk<Value extends AnySchema>
+  extends _schema.Schema<Chunk.Chunk<Schema.To<Value>>, ReadonlyArray<Schema.From<Value>>, Schema.Context<Value>>
+  implements chunk<Value>
+{
+  constructor(readonly value: Value) {
+    const schema = transform(
+      array(value),
+      chunkFromSelf(to(value)),
+      (as) => as.length === 0 ? Chunk.empty() : Chunk.fromIterable(as),
+      Chunk.toReadonlyArray
+    )
+    super(schema.ast)
+  }
+}
+
+/**
+ * @category Chunk transformations
+ * @since 1.0.0
+ */
+export const chunk = <Value extends AnySchema>(value: Value): chunk<Value> => new $Chunk(value)
 
 const toData = <A extends Readonly<Record<string, any>> | ReadonlyArray<any>>(a: A): A =>
   Array.isArray(a) ? Data.array(a) : Data.struct(a)
@@ -4965,46 +5266,74 @@ const dataParse = <R, A extends Readonly<Record<string, any>> | ReadonlyArray<an
     : ParseResult.fail(new ParseResult.Type(ast, u))
 
 /**
- * @category Data transformations
+ * @category api interface
  * @since 1.0.0
  */
-export const dataFromSelf = <
-  R,
-  I extends Readonly<Record<string, any>> | ReadonlyArray<any>,
-  A extends Readonly<Record<string, any>> | ReadonlyArray<any>
->(
-  item: Schema<A, I, R>
-): Schema<A, I, R> => {
-  return declare(
-    [item],
-    (item) => dataParse(ParseResult.decodeUnknown(item)),
-    (item) => dataParse(ParseResult.encodeUnknown(item)),
-    {
-      description: `Data<${format(item)}>`,
-      pretty: dataPretty,
-      arbitrary: dataArbitrary
-    }
-  )
+export interface dataFromSelf<Value extends AnySchema>
+  extends Schema<Schema.To<Value>, Schema.From<Value>, Schema.Context<Value>>
+{
+  readonly value: Value
+}
+
+class DataFromSelf<Value extends AnySchema>
+  extends _schema.Schema<Schema.To<Value>, Schema.From<Value>, Schema.Context<Value>>
+  implements dataFromSelf<Value>
+{
+  constructor(readonly value: Value) {
+    const schema = declare(
+      [value],
+      (value) => dataParse(ParseResult.decodeUnknown(value)),
+      (value) => dataParse(ParseResult.encodeUnknown(value)),
+      {
+        description: `Data<${format(value)}>`,
+        pretty: dataPretty,
+        arbitrary: dataArbitrary
+      }
+    )
+    super(schema.ast)
+  }
 }
 
 /**
  * @category Data transformations
  * @since 1.0.0
  */
-export const data = <
-  R,
-  I extends Readonly<Record<string, any>> | ReadonlyArray<any>,
-  A extends Readonly<Record<string, any>> | ReadonlyArray<any>
->(
-  item: Schema<A, I, R>
-): Schema<A, I, R> =>
-  transform(
-    item,
-    dataFromSelf(to(item)),
-    toData,
-    (a) => Array.isArray(a) ? Array.from(a) : Object.assign({}, a),
-    { strict: false }
-  )
+export const dataFromSelf = <Value extends AnySchema>(
+  value: Value
+): dataFromSelf<Value> => new DataFromSelf(value)
+
+/**
+ * @category api interface
+ * @since 1.0.0
+ */
+export interface data<Value extends AnySchema>
+  extends Schema<Schema.To<Value>, Schema.From<Value>, Schema.Context<Value>>
+{
+  readonly value: Value
+}
+
+class $Data<Value extends AnySchema> extends _schema.Schema<Schema.To<Value>, Schema.From<Value>, Schema.Context<Value>>
+  implements dataFromSelf<Value>
+{
+  constructor(readonly value: Value) {
+    const schema = transform(
+      value,
+      dataFromSelf(to(value)),
+      toData,
+      (a) => Array.isArray(a) ? Array.from(a) : Object.assign({}, a),
+      { strict: false }
+    )
+    super(schema.ast)
+  }
+}
+
+/**
+ * @category Data transformations
+ * @since 1.0.0
+ */
+export const data = <Value extends AnySchema>(
+  value: Value
+): data<Value> => new $Data(value)
 
 type MissingSelfGeneric<Usage extends string, Params extends string = ""> =
   `Missing \`Self\` generic - use \`class Self extends ${Usage}<Self>()(${Params}{ ... })\``
@@ -5405,10 +5734,16 @@ const fiberIdPretty: Pretty.Pretty<FiberId.FiberId> = (fiberId) => {
 }
 
 /**
+ * @category api interface
+ * @since 1.0.0
+ */
+export interface FiberIdFromSelf extends Schema<FiberId.FiberId> {}
+
+/**
  * @category FiberId constructors
  * @since 1.0.0
  */
-export const FiberIdFromSelf: Schema<FiberId.FiberId> = declare(
+export const FiberIdFromSelf: FiberIdFromSelf = declare(
   FiberId.isFiberId,
   {
     identifier: "FiberIdFromSelf",
@@ -5443,7 +5778,13 @@ const fiberIdEncode = (input: FiberId.FiberId): FiberIdFrom => {
   }
 }
 
-const _FiberId: Schema<FiberId.FiberId, FiberIdFrom> = transform(
+/**
+ * @category api interface
+ * @since 1.0.0
+ */
+export interface $FiberId extends Schema<FiberId.FiberId, FiberIdFrom> {}
+
+const _FiberId: $FiberId = transform(
   FiberIdFrom,
   FiberIdFromSelf,
   fiberIdDecode,
@@ -5815,36 +6156,83 @@ const hashSetParse = <R, A>(
     : ParseResult.fail(new ParseResult.Type(ast, u))
 
 /**
- * @category HashSet transformations
+ * @category api interface
  * @since 1.0.0
  */
-export const hashSetFromSelf = <A, I, R>(
-  item: Schema<A, I, R>
-): Schema<HashSet.HashSet<A>, HashSet.HashSet<I>, R> => {
-  return declare(
-    [item],
-    (item) => hashSetParse(ParseResult.decodeUnknown(array(item))),
-    (item) => hashSetParse(ParseResult.encodeUnknown(array(item))),
-    {
-      description: `HashSet<${format(item)}>`,
-      pretty: hashSetPretty,
-      arbitrary: hashSetArbitrary,
-      equivalence: hashSetEquivalence
-    }
-  )
+export interface hashSetFromSelf<Value extends AnySchema> extends
+  Schema<
+    HashSet.HashSet<Schema.To<Value>>,
+    HashSet.HashSet<Schema.From<Value>>,
+    Schema.Context<Value>
+  >
+{
+  readonly value: Value
+}
+
+class HashSetFromSelf<Value extends AnySchema> extends _schema.Schema<
+  ReadonlySet<Schema.To<Value>>,
+  ReadonlySet<Schema.From<Value>>,
+  Schema.Context<Value>
+> implements hashSetFromSelf<Value> {
+  constructor(readonly value: Value) {
+    const schema = declare(
+      [value],
+      (value) => hashSetParse(ParseResult.decodeUnknown(array(value))),
+      (value) => hashSetParse(ParseResult.encodeUnknown(array(value))),
+      {
+        description: `HashSet<${format(value)}>`,
+        pretty: hashSetPretty,
+        arbitrary: hashSetArbitrary,
+        equivalence: hashSetEquivalence
+      }
+    )
+    super(schema.ast)
+  }
 }
 
 /**
  * @category HashSet transformations
  * @since 1.0.0
  */
-export const hashSet = <A, I, R>(item: Schema<A, I, R>): Schema<HashSet.HashSet<A>, ReadonlyArray<I>, R> =>
-  transform(
-    array(item),
-    hashSetFromSelf(to(item)),
-    (as) => HashSet.fromIterable(as),
-    (set) => Array.from(set)
-  )
+export const hashSetFromSelf = <Value extends AnySchema>(
+  value: Value
+): hashSetFromSelf<Value> => new HashSetFromSelf(value)
+
+/**
+ * @category api interface
+ * @since 1.0.0
+ */
+export interface hashSet<Value extends AnySchema> extends
+  Schema<
+    HashSet.HashSet<Schema.To<Value>>,
+    ReadonlyArray<Schema.From<Value>>,
+    Schema.Context<Value>
+  >
+{
+  readonly value: Value
+}
+
+class $HashSet<Value extends AnySchema> extends _schema.Schema<
+  HashSet.HashSet<Schema.To<Value>>,
+  ReadonlyArray<Schema.From<Value>>,
+  Schema.Context<Value>
+> implements readonlySet<Value> {
+  constructor(readonly value: Value) {
+    const schema = transform(
+      array(value),
+      hashSetFromSelf(to(value)),
+      (as) => HashSet.fromIterable(as),
+      (set) => Array.from(set)
+    )
+    super(schema.ast)
+  }
+}
+
+/**
+ * @category HashSet transformations
+ * @since 1.0.0
+ */
+export const hashSet = <Value extends AnySchema>(value: Value): hashSet<Value> => new $HashSet(value)
 
 const hashMapArbitrary = <K, V>(
   key: Arbitrary<K>,
@@ -5882,40 +6270,89 @@ const hashMapParse = <R, K, V>(
     : ParseResult.fail(new ParseResult.Type(ast, u))
 
 /**
- * @category HashMap transformations
+ * @category api interface
  * @since 1.0.0
  */
-export const hashMapFromSelf = <K, IK, RK, V, IV, RV>({ key, value }: {
-  readonly key: Schema<K, IK, RK>
-  readonly value: Schema<V, IV, RV>
-}): Schema<HashMap.HashMap<K, V>, HashMap.HashMap<IK, IV>, RK | RV> => {
-  return declare(
-    [key, value],
-    (key, value) => hashMapParse(ParseResult.decodeUnknown(array(tuple(key, value)))),
-    (key, value) => hashMapParse(ParseResult.encodeUnknown(array(tuple(key, value)))),
-    {
-      description: `HashMap<${format(key)}, ${format(value)}>`,
-      pretty: hashMapPretty,
-      arbitrary: hashMapArbitrary,
-      equivalence: hashMapEquivalence
-    }
-  )
+export interface hashMapFromSelf<K extends AnySchema, V extends AnySchema> extends
+  Schema<
+    HashMap.HashMap<Schema.To<K>, Schema.To<V>>,
+    HashMap.HashMap<Schema.From<K>, Schema.From<V>>,
+    Schema.Context<K> | Schema.Context<V>
+  >
+{
+  readonly key: K
+  readonly value: V
+}
+
+class HashMapFromSelf<K extends AnySchema, V extends AnySchema> extends _schema.Schema<
+  HashMap.HashMap<Schema.To<K>, Schema.To<V>>,
+  HashMap.HashMap<Schema.From<K>, Schema.From<V>>,
+  Schema.Context<K> | Schema.Context<V>
+> implements readonlyMapFromSelf<K, V> {
+  constructor(readonly key: K, readonly value: V) {
+    const schema = declare(
+      [key, value],
+      (key, value) => hashMapParse(ParseResult.decodeUnknown(array(tuple(key, value)))),
+      (key, value) => hashMapParse(ParseResult.encodeUnknown(array(tuple(key, value)))),
+      {
+        description: `HashMap<${format(key)}, ${format(value)}>`,
+        pretty: hashMapPretty,
+        arbitrary: hashMapArbitrary,
+        equivalence: hashMapEquivalence
+      }
+    )
+    super(schema.ast)
+  }
 }
 
 /**
  * @category HashMap transformations
  * @since 1.0.0
  */
-export const hashMap = <K, IK, RK, V, IV, RV>({ key, value }: {
-  readonly key: Schema<K, IK, RK>
-  readonly value: Schema<V, IV, RV>
-}): Schema<HashMap.HashMap<K, V>, ReadonlyArray<readonly [IK, IV]>, RK | RV> =>
-  transform(
-    array(tuple(key, value)),
-    hashMapFromSelf({ key: to(key), value: to(value) }),
-    (as) => HashMap.fromIterable(as),
-    (map) => Array.from(map)
-  )
+export const hashMapFromSelf = <K extends AnySchema, V extends AnySchema>({ key, value }: {
+  readonly key: K
+  readonly value: V
+}): hashMapFromSelf<K, V> => new HashMapFromSelf(key, value)
+
+/**
+ * @category api interface
+ * @since 1.0.0
+ */
+export interface hashMap<K extends AnySchema, V extends AnySchema> extends
+  Schema<
+    HashMap.HashMap<Schema.To<K>, Schema.To<V>>,
+    ReadonlyArray<readonly [Schema.From<K>, Schema.From<V>]>,
+    Schema.Context<K> | Schema.Context<V>
+  >
+{
+  readonly key: K
+  readonly value: V
+}
+
+class $HashMap<K extends AnySchema, V extends AnySchema> extends _schema.Schema<
+  HashMap.HashMap<Schema.To<K>, Schema.To<V>>,
+  ReadonlyArray<readonly [Schema.From<K>, Schema.From<V>]>,
+  Schema.Context<K> | Schema.Context<V>
+> implements readonlyMapFromSelf<K, V> {
+  constructor(readonly key: K, readonly value: V) {
+    const schema = transform(
+      array(tuple(key, value)),
+      hashMapFromSelf({ key: to(key), value: to(value) }),
+      (as) => HashMap.fromIterable(as),
+      (map) => Array.from(map)
+    )
+    super(schema.ast)
+  }
+}
+
+/**
+ * @category HashMap transformations
+ * @since 1.0.0
+ */
+export const hashMap = <K extends AnySchema, V extends AnySchema>({ key, value }: {
+  readonly key: K
+  readonly value: V
+}): hashMap<K, V> => new $HashMap(key, value)
 
 const listArbitrary = <A>(item: Arbitrary<A>): Arbitrary<List.List<A>> => (fc) =>
   fc.array(item(fc)).map((as) => List.fromIterable(as))
@@ -5942,36 +6379,85 @@ const listParse = <R, A>(
     : ParseResult.fail(new ParseResult.Type(ast, u))
 
 /**
- * @category List transformations
+ * @category api interface
  * @since 1.0.0
  */
-export const listFromSelf = <A, I, R>(
-  item: Schema<A, I, R>
-): Schema<List.List<A>, List.List<I>, R> => {
-  return declare(
-    [item],
-    (item) => listParse(ParseResult.decodeUnknown(array(item))),
-    (item) => listParse(ParseResult.encodeUnknown(array(item))),
-    {
-      description: `List<${format(item)}>`,
-      pretty: listPretty,
-      arbitrary: listArbitrary,
-      equivalence: listEquivalence
-    }
-  )
+export interface listFromSelf<Value extends AnySchema> extends
+  Schema<
+    List.List<Schema.To<Value>>,
+    List.List<Schema.From<Value>>,
+    Schema.Context<Value>
+  >
+{
+  readonly value: Value
+}
+
+class ListFromSelf<Value extends AnySchema> extends _schema.Schema<
+  List.List<Schema.To<Value>>,
+  List.List<Schema.From<Value>>,
+  Schema.Context<Value>
+> implements listFromSelf<Value> {
+  constructor(readonly value: Value) {
+    const schema = declare(
+      [value],
+      (value) => listParse(ParseResult.decodeUnknown(array(value))),
+      (value) => listParse(ParseResult.encodeUnknown(array(value))),
+      {
+        description: `List<${format(value)}>`,
+        pretty: listPretty,
+        arbitrary: listArbitrary,
+        equivalence: listEquivalence
+      }
+    )
+    super(schema.ast)
+  }
 }
 
 /**
  * @category List transformations
  * @since 1.0.0
  */
-export const list = <A, I, R>(item: Schema<A, I, R>): Schema<List.List<A>, ReadonlyArray<I>, R> =>
-  transform(
-    array(item),
-    listFromSelf(to(item)),
-    (as) => List.fromIterable(as),
-    (set) => Array.from(set)
-  )
+export const listFromSelf = <Value extends AnySchema>(
+  value: Value
+): listFromSelf<Value> => new ListFromSelf(value)
+
+/**
+ * @category api interface
+ * @since 1.0.0
+ */
+export interface list<Value extends AnySchema> extends
+  Schema<
+    List.List<Schema.To<Value>>,
+    ReadonlyArray<Schema.From<Value>>,
+    Schema.Context<Value>
+  >
+{
+  readonly value: Value
+}
+
+class $List<Value extends AnySchema> extends _schema.Schema<
+  List.List<Schema.To<Value>>,
+  ReadonlyArray<Schema.From<Value>>,
+  Schema.Context<Value>
+> implements list<Value> {
+  constructor(readonly value: Value) {
+    const schema = transform(
+      array(value),
+      listFromSelf(to(value)),
+      (as) => List.fromIterable(as),
+      (set) => Array.from(set)
+    )
+    super(schema.ast)
+  }
+}
+
+/**
+ * @category List transformations
+ * @since 1.0.0
+ */
+export const list = <Value extends AnySchema>(
+  value: Value
+): list<Value> => new $List(value)
 
 const schemaFromArbitrary = <A>(value: Arbitrary<A>): Schema<A> =>
   suspend<A, A, never>(() => any).pipe(annotations({
