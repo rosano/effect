@@ -232,9 +232,6 @@ Schema.mutable(Schema.struct({ a: aContext, b: bContext }))
 // $ExpectType Schema<{ readonly [x: string]: number; }, { readonly [x: string]: number; }, "a" | "b">
 Schema.asSchema(Schema.record(aContext, bContext))
 
-// $ExpectType record<aContext, bContext>
-Schema.record(aContext, bContext)
-
 // ---------------------------------------------
 // extend
 // ---------------------------------------------

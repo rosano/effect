@@ -628,56 +628,32 @@ S.required(
 )
 
 // ---------------------------------------------
-// Records
+// record
 // ---------------------------------------------
 
 // $ExpectType Schema<{ readonly [x: string]: string; }, { readonly [x: string]: string; }, never>
 S.asSchema(S.record(S.string, S.string))
 
-// $ExpectType record<$string, $string>
-S.record(S.string, S.string)
-
 // $ExpectType Schema<{ readonly [x: string]: number; }, { readonly [x: string]: string; }, never>
 S.asSchema(S.record(S.string, S.NumberFromString))
-
-// $ExpectType record<$string, NumberFromString>
-S.record(S.string, S.NumberFromString)
 
 // $ExpectType Schema<{ readonly [x: string]: string; }, { readonly [x: string]: string; }, never>
 S.asSchema(S.record(pipe(S.string, S.minLength(2)), S.string))
 
-// $ExpectType record<Schema<string, string, never>, $string>
-S.record(pipe(S.string, S.minLength(2)), S.string)
-
 // $ExpectType Schema<{ readonly a: string; readonly b: string; }, { readonly a: string; readonly b: string; }, never>
 S.asSchema(S.record(S.union(S.literal("a"), S.literal("b")), S.string))
-
-// $ExpectType record<union<[literal<"a">, literal<"b">]>, $string>
-S.record(S.union(S.literal("a"), S.literal("b")), S.string)
 
 // $ExpectType Schema<{ readonly [x: symbol]: string; }, { readonly [x: symbol]: string; }, never>
 S.asSchema(S.record(S.symbolFromSelf, S.string))
 
-// $ExpectType record<symbolFromSelf, $string>
-S.record(S.symbolFromSelf, S.string)
-
 // $ExpectType Schema<{ readonly [x: `a${string}`]: string; }, { readonly [x: `a${string}`]: string; }, never>
 S.asSchema(S.record(S.templateLiteral(S.literal("a"), S.string), S.string))
-
-// $ExpectType record<templateLiteral<`a${string}`>, $string>
-S.record(S.templateLiteral(S.literal("a"), S.string), S.string)
 
 // $ExpectType Schema<{ readonly [x: string & Brand<"UserId">]: string; }, { readonly [x: string]: string; }, never>
 S.asSchema(S.record(S.string.pipe(S.brand("UserId")), S.string))
 
-// $ExpectType record<brand<$string, "UserId">, $string>
-S.record(S.string.pipe(S.brand("UserId")), S.string)
-
 // $ExpectType Schema<{ readonly [x: string & Brand<symbol>]: string; }, { readonly [x: string]: string; }, never>
 S.asSchema(S.record(S.string.pipe(S.brand(Symbol.for("UserId"))), S.string))
-
-// $ExpectType record<brand<$string, symbol>, $string>
-S.record(S.string.pipe(S.brand(Symbol.for("UserId"))), S.string)
 
 // ---------------------------------------------
 // Extend
@@ -767,13 +743,13 @@ S.struct({ a: S.string, b: S.number }).pipe(S.rename({ a: "c", d: "e" }))
 // option
 // ---------------------------------------------
 
-// $ExpectType Schema<Option<number>, Option<number>, never>
+// $ExpectType Schema<Option<number>, OptionFrom<number>, never>
 S.asSchema(S.option(S.number))
 
 // $ExpectType option<$number>
 S.option(S.number)
 
-// $ExpectType Schema<Option<number>, Option<string>, never>
+// $ExpectType Schema<Option<number>, OptionFrom<string>, never>
 S.asSchema(S.option(S.NumberFromString))
 
 // $ExpectType option<NumberFromString>
@@ -784,9 +760,15 @@ S.option(S.NumberFromString)
 // ---------------------------------------------
 
 // $ExpectType Schema<Option<number>, Option<number>, never>
+S.asSchema(S.optionFromSelf(S.number))
+
+// $ExpectType optionFromSelf<$number>
 S.optionFromSelf(S.number)
 
 // $ExpectType Schema<Option<number>, Option<string>, never>
+S.asSchema(S.optionFromSelf(S.NumberFromString))
+
+// $ExpectType optionFromSelf<NumberFromString>
 S.optionFromSelf(S.NumberFromString)
 
 // ---------------------------------------------
